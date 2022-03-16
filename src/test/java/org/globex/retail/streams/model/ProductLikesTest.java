@@ -10,12 +10,12 @@ public class ProductLikesTest {
 
     @Test
     public void testSerializeToJson() throws JsonProcessingException {
-        ProductLikes productLikes = new ProductLikes.Builder("123456").build();
+        ProductScore productLikes = new ProductScore.Builder("123456").build();
         ObjectMapper objectMapper = new ObjectMapper();
         String jsonProductLike = objectMapper.writeValueAsString(productLikes);
-        ProductLikes fromJson = objectMapper.readValue(jsonProductLike, ProductLikes.class);
+        ProductScore fromJson = objectMapper.readValue(jsonProductLike, ProductScore.class);
         MatcherAssert.assertThat(fromJson.getProductId(), Matchers.equalTo("123456"));
-        MatcherAssert.assertThat(fromJson.getLikes(), Matchers.equalTo(1));
+        MatcherAssert.assertThat(fromJson.getScore(), Matchers.equalTo(1));
     }
 
 }

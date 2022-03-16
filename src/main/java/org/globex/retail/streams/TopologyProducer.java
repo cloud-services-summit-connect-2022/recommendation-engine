@@ -18,7 +18,7 @@ import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.globex.retail.streams.collectors.FixedSizePriorityQueue;
-import org.globex.retail.streams.model.ProductLikes;
+import org.globex.retail.streams.model.ProductScore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,22 +40,22 @@ public class TopologyProducer {
     @Produces
     public Topology buildTopology() {
 
-        final ObjectMapperSerde<ProductLikes> productLikesSerde = new ObjectMapperSerde<>(ProductLikes.class);
+        final ObjectMapperSerde<ProductScore> productLikesSerde = new ObjectMapperSerde<>(ProductScore.class);
         final ObjectMapperSerde<FixedSizePriorityQueue> fixedSizePriorityQueueSerde = new ObjectMapperSerde<>(FixedSizePriorityQueue.class);
 
-        Comparator<ProductLikes> comparator = (pl1, pl2) -> pl2.getLikes() - pl1.getLikes();
-        FixedSizePriorityQueue<ProductLikes> fixedQueue = new FixedSizePriorityQueue<>(comparator, aggregationSize);
+        Comparator<ProductScore> comparator = (pl1, pl2) -> pl2.getScore() - pl1.getScore();
+        FixedSizePriorityQueue<ProductScore> fixedQueue = new FixedSizePriorityQueue<>(comparator, aggregationSize);
 
         StreamsBuilder builder = new StreamsBuilder();
 
-        KTable<String, ProductLikes> productLikes =
+        KTable<String, ProductScore> productLikes =
                 builder.stream(trackingEventTopic, Consumed.with(Serdes.String(), Serdes.String()))
                         .mapValues(value -> {
                             JsonObject activity = new JsonObject(value);
                             String productId = activity.getJsonObject("actionInfo").getString("productId");
-                            return new ProductLikes.Builder(productId).build();
+                            return new ProductScore.Builder(productId).build();
                         }).groupBy((key, value) -> value.getProductId(), Grouped.with(Serdes.String(), productLikesSerde))
-                        .reduce(ProductLikes::sum);
+                        .reduce(ProductScore::sum);
 
         productLikes.groupBy((key, value) -> KeyValue.pair(value.getCategory(), value), Grouped.with(Serdes.String(), productLikesSerde))
                 .aggregate(() -> fixedQueue,

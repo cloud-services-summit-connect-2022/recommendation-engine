@@ -8,7 +8,7 @@ import java.util.List;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.globex.retail.streams.collectors.FixedSizePriorityQueue;
-import org.globex.retail.streams.model.ProductLikes;
+import org.globex.retail.streams.model.ProductScore;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
@@ -17,22 +17,22 @@ public class FixedSizePriorityQueueSerDeTest {
 
     @Test
     public void testSerializeAndDeserialize() throws JsonProcessingException {
-        Comparator<ProductLikes> comparator = (pl1, pl2) -> pl2.getLikes() - pl1.getLikes();
-        FixedSizePriorityQueue<ProductLikes> queue = new FixedSizePriorityQueue<>(comparator, 5);
-        queue.add(new ProductLikes.Builder("123456").likes(10).build());
-        queue.add(new ProductLikes.Builder("234567").likes(5).build());
-        queue.add(new ProductLikes.Builder("345678").likes(15).build());
+        Comparator<ProductScore> comparator = (pl1, pl2) -> pl2.getScore() - pl1.getScore();
+        FixedSizePriorityQueue<ProductScore> queue = new FixedSizePriorityQueue<>(comparator, 5);
+        queue.add(new ProductScore.Builder("123456").score(10).build());
+        queue.add(new ProductScore.Builder("234567").score(5).build());
+        queue.add(new ProductScore.Builder("345678").score(15).build());
         ObjectMapper mapper = new ObjectMapper();
         String serialized = mapper.writeValueAsString(queue);
-        FixedSizePriorityQueue<ProductLikes> fromJson = new ObjectMapper().readValue(serialized, FixedSizePriorityQueue.class);
+        FixedSizePriorityQueue<ProductScore> fromJson = new ObjectMapper().readValue(serialized, FixedSizePriorityQueue.class);
         MatcherAssert.assertThat(fromJson.size(), Matchers.equalTo(3));
         List<String> products = new ArrayList<>();
         List<Integer> likes = new ArrayList<>();
-        Iterator<ProductLikes> i = fromJson.iterator();
+        Iterator<ProductScore> i = fromJson.iterator();
         while (i.hasNext()) {
-            ProductLikes p = i.next();
+            ProductScore p = i.next();
             products.add(p.getProductId());
-            likes.add(p.getLikes());
+            likes.add(p.getScore());
         }
         MatcherAssert.assertThat(products.get(0), Matchers.equalTo("345678"));
         MatcherAssert.assertThat(products.get(1), Matchers.equalTo("123456"));
