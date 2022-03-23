@@ -9,18 +9,18 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import org.globex.retail.streams.collectors.FixedSizePriorityQueue;
 import org.globex.retail.streams.model.ProductScore;
 
-public class FixedSizePriorityQueueSerializer extends StdSerializer<FixedSizePriorityQueue<ProductScore>> {
+public class FixedSizePriorityQueueSerializer extends StdSerializer<FixedSizePriorityQueue> {
 
     public FixedSizePriorityQueueSerializer() {
         this(null);
     }
 
-    public FixedSizePriorityQueueSerializer(Class<FixedSizePriorityQueue<ProductScore>> t) {
+    public FixedSizePriorityQueueSerializer(Class<FixedSizePriorityQueue> t) {
         super(t);
     }
 
     @Override
-    public void serialize(FixedSizePriorityQueue<ProductScore> queue, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+    public void serialize(FixedSizePriorityQueue queue, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
         jsonGenerator.writeStartArray();
         Iterator<ProductScore> iterator = queue.iterator();
         while (iterator.hasNext()) {

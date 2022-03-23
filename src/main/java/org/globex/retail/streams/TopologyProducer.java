@@ -19,6 +19,7 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.globex.retail.streams.collectors.FixedSizePriorityQueue;
 import org.globex.retail.streams.model.ProductScore;
+import org.globex.retail.streams.serde.FixedSizePriorityQueueSerde;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,10 +41,11 @@ public class TopologyProducer {
     @Produces
     public Topology buildTopology() {
 
-        final ObjectMapperSerde<ProductScore> productLikesSerde = new ObjectMapperSerde<>(ProductScore.class);
-        final ObjectMapperSerde<FixedSizePriorityQueue> fixedSizePriorityQueueSerde = new ObjectMapperSerde<>(FixedSizePriorityQueue.class);
-
         Comparator<ProductScore> comparator = (pl1, pl2) -> pl2.getScore() - pl1.getScore();
+
+        final ObjectMapperSerde<ProductScore> productLikesSerde = new ObjectMapperSerde<>(ProductScore.class);
+        final FixedSizePriorityQueueSerde fixedSizePriorityQueueSerde = new FixedSizePriorityQueueSerde(comparator, aggregationSize);
+
         FixedSizePriorityQueue<ProductScore> fixedQueue = new FixedSizePriorityQueue<>(comparator, aggregationSize);
 
         StreamsBuilder builder = new StreamsBuilder();
@@ -58,7 +60,7 @@ public class TopologyProducer {
                         .reduce(ProductScore::sum);
 
         productLikes.groupBy((key, value) -> KeyValue.pair(value.getCategory(), value), Grouped.with(Serdes.String(), productLikesSerde))
-                .aggregate(() -> fixedQueue,
+                .aggregate(() -> new FixedSizePriorityQueue<>(comparator, aggregationSize),
                         (key, value, aggregate) -> aggregate.add(value),
                         (key, value, aggregate) -> aggregate.remove(value),
                         Materialized.<String, FixedSizePriorityQueue, KeyValueStore<Bytes, byte[]>>as(aggregationStore).withKeySerde(Serdes.String()).withValueSerde(fixedSizePriorityQueueSerde));

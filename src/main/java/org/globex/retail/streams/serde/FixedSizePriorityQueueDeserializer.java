@@ -14,24 +14,30 @@ import org.globex.retail.streams.model.ProductScore;
 
 public class FixedSizePriorityQueueDeserializer extends StdDeserializer<FixedSizePriorityQueue<ProductScore>> {
 
-    public FixedSizePriorityQueueDeserializer() {
-        this(null);
+    private Comparator<ProductScore> comparator;
+
+    int maxSize;
+
+    public FixedSizePriorityQueueDeserializer(Comparator<ProductScore> comparator, int maxSize) {
+        this(null, comparator, maxSize);
     }
 
-    public FixedSizePriorityQueueDeserializer(Class<?> vc) {
+    public FixedSizePriorityQueueDeserializer(Class<?> vc, Comparator<ProductScore> comparator, int maxSize) {
         super(vc);
+        this.comparator = comparator;
+        this.maxSize = maxSize;
     }
 
     @SuppressWarnings("rawtypes")
     @Override
     public FixedSizePriorityQueue<ProductScore> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
-        Comparator<ProductScore> comparator = (pl1, pl2) -> pl2.getScore() - pl1.getScore();
-        FixedSizePriorityQueue queue = new FixedSizePriorityQueue(comparator);
+        FixedSizePriorityQueue<ProductScore> queue = new FixedSizePriorityQueue<>(comparator, maxSize);
         JsonNode json = p.getCodec().readTree(p);
         Iterator<JsonNode> i = json.elements();
         while (i.hasNext()) {
             JsonNode node = i.next();
             String productId = node.get("productId").asText();
+            System.out.println("Deserializer: " + productId);
             int likes = node.get("score").asInt();
             ProductScore productLikes = new ProductScore.Builder(productId).score(likes).build();
             queue.add(productLikes);

@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.globex.retail.streams.collectors.FixedSizePriorityQueue;
 import org.globex.retail.streams.model.ProductScore;
 import org.hamcrest.MatcherAssert;
@@ -23,8 +24,19 @@ public class FixedSizePriorityQueueSerDeTest {
         queue.add(new ProductScore.Builder("234567").score(5).build());
         queue.add(new ProductScore.Builder("345678").score(15).build());
         ObjectMapper mapper = new ObjectMapper();
+        SimpleModule module = new SimpleModule();
+        FixedSizePriorityQueueSerializer serializer = new FixedSizePriorityQueueSerializer();
+        module.addSerializer(FixedSizePriorityQueue.class, serializer);
+        mapper.registerModule(module);
         String serialized = mapper.writeValueAsString(queue);
-        FixedSizePriorityQueue<ProductScore> fromJson = new ObjectMapper().readValue(serialized, FixedSizePriorityQueue.class);
+
+        mapper = new ObjectMapper();
+        module = new SimpleModule();
+        FixedSizePriorityQueueDeserializer deserializer = new FixedSizePriorityQueueDeserializer(comparator, 10);
+        module.addDeserializer(FixedSizePriorityQueue.class, deserializer);
+        mapper.registerModule(module);
+
+        FixedSizePriorityQueue<ProductScore> fromJson = mapper.readValue(serialized, FixedSizePriorityQueue.class);
         MatcherAssert.assertThat(fromJson.size(), Matchers.equalTo(3));
         List<String> products = new ArrayList<>();
         List<Integer> likes = new ArrayList<>();
