@@ -37,7 +37,6 @@ public class FixedSizePriorityQueueDeserializer extends StdDeserializer<FixedSiz
         while (i.hasNext()) {
             JsonNode node = i.next();
             String productId = node.get("productId").asText();
-            System.out.println("Deserializer: " + productId);
             int likes = node.get("score").asInt();
             ProductScore productLikes = new ProductScore.Builder(productId).score(likes).build();
             queue.add(productLikes);
